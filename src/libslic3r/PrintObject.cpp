@@ -768,12 +768,12 @@ void PrintObject::detect_surfaces_type()
                 // If we have raft layers, consider bottom layer as a bridge just like any other bottom surface lying on the void.
                 SurfaceType surface_type_bottom_1st =
                     (m_config.raft_layers.value > 0 && m_config.support_material_contact_distance.value > 0) ?
-                    stBottomBridge : stBottom;
+                    stBottom /* stBottomBridge */ : stBottom;
                 // If we have soluble support material, don't bridge. The overhang will be squished against a soluble layer separating
                 // the support from the print.
                 SurfaceType surface_type_bottom_other =
                     (m_config.support_material.value && m_config.support_material_contact_distance.value == 0) ?
-                    stBottom : stBottomBridge;
+                    stBottom : stBottom /* stBottomBridge */;
                 for (size_t idx_layer = range.begin(); idx_layer < range.end(); ++ idx_layer) {
                     m_print->throw_if_canceled();
                     // BOOST_LOG_TRIVIAL(trace) << "Detecting solid surfaces for region " << idx_region << " and layer " << layer->print_z;
