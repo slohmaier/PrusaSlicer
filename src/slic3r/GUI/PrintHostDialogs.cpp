@@ -182,25 +182,24 @@ PrintHostQueueDialog::PrintHostQueueDialog(wxWindow *parent)
 
     auto *topsizer = new wxBoxSizer(wxVERTICAL);
 
+    std::vector<int> widths;
+    widths.reserve(6);
+    if (!load_user_data(UDT_COLS, widths)) {
+        widths.clear();
+        for (size_t i = 0; i < 6; i++)
+            widths.push_back(-1);
+    }
+
     job_list = new wxDataViewListCtrl(this, wxID_ANY);
     // Note: Keep these in sync with Column
-    job_list->AppendTextColumn(_L("ID"), wxDATAVIEW_CELL_INERT, -1, wxALIGN_LEFT, wxDATAVIEW_COL_RESIZABLE | wxDATAVIEW_COL_SORTABLE);
-    job_list->AppendProgressColumn(_L("Progress"), wxDATAVIEW_CELL_INERT, -1, wxALIGN_LEFT, wxDATAVIEW_COL_RESIZABLE | wxDATAVIEW_COL_SORTABLE);
-    job_list->AppendTextColumn(_L("Status"), wxDATAVIEW_CELL_INERT, -1, wxALIGN_LEFT, wxDATAVIEW_COL_RESIZABLE | wxDATAVIEW_COL_SORTABLE);
-    job_list->AppendTextColumn(_L("Host"), wxDATAVIEW_CELL_INERT, -1, wxALIGN_LEFT, wxDATAVIEW_COL_RESIZABLE | wxDATAVIEW_COL_SORTABLE);
-    job_list->AppendTextColumn(_CTX_utf8(L_CONTEXT("Size", "OfFile"), "OfFile"), wxDATAVIEW_CELL_INERT, -1, wxALIGN_LEFT, wxDATAVIEW_COL_RESIZABLE | wxDATAVIEW_COL_SORTABLE);
-    job_list->AppendTextColumn(_L("Filename"), wxDATAVIEW_CELL_INERT, -1, wxALIGN_LEFT, wxDATAVIEW_COL_RESIZABLE | wxDATAVIEW_COL_SORTABLE);
+    job_list->AppendTextColumn(_L("ID"), wxDATAVIEW_CELL_INERT, widths[0], wxALIGN_LEFT, wxDATAVIEW_COL_RESIZABLE | wxDATAVIEW_COL_SORTABLE);
+    job_list->AppendProgressColumn(_L("Progress"), wxDATAVIEW_CELL_INERT, widths[1], wxALIGN_LEFT, wxDATAVIEW_COL_RESIZABLE | wxDATAVIEW_COL_SORTABLE);
+    job_list->AppendTextColumn(_L("Status"), wxDATAVIEW_CELL_INERT, widths[2], wxALIGN_LEFT, wxDATAVIEW_COL_RESIZABLE | wxDATAVIEW_COL_SORTABLE);
+    job_list->AppendTextColumn(_L("Host"), wxDATAVIEW_CELL_INERT, widths[3], wxALIGN_LEFT, wxDATAVIEW_COL_RESIZABLE | wxDATAVIEW_COL_SORTABLE);
+    job_list->AppendTextColumn(_CTX_utf8(L_CONTEXT("Size", "OfFile"), "OfFile"), wxDATAVIEW_CELL_INERT, widths[4], wxALIGN_LEFT, wxDATAVIEW_COL_RESIZABLE | wxDATAVIEW_COL_SORTABLE);
+    job_list->AppendTextColumn(_L("Filename"), wxDATAVIEW_CELL_INERT, widths[5], wxALIGN_LEFT, wxDATAVIEW_COL_RESIZABLE | wxDATAVIEW_COL_SORTABLE);
     job_list->AppendTextColumn(_L("Error Message"), wxDATAVIEW_CELL_INERT, -1, wxALIGN_CENTER, wxDATAVIEW_COL_HIDDEN);
  
-    /*
-    job_list->Bind(wxEVT_DATAVIEW_ITEM_EXPANDING,[this, em](wxDataViewEvent& evt) {
-        for (size_t i = 0; i < job_list->GetColumnCount(); i++) {
-            auto *col = job_list->GetColumn(i);
-            BOOST_LOG_TRIVIAL(error) << "col:" << i << " width: " << col->GetWidth();
-        }
-    });
-    */
-
     auto *btnsizer = new wxBoxSizer(wxHORIZONTAL);
     btn_cancel = new wxButton(this, wxID_DELETE, _L("Cancel selected"));
     btn_cancel->Disable();
@@ -219,8 +218,7 @@ PrintHostQueueDialog::PrintHostQueueDialog(wxWindow *parent)
 
     Bind(wxEVT_SIZE, [this, em](wxSizeEvent& evt) {
         OnSize(evt);
-        wxGetApp().app_config->set("print_host_queue_dialog_height", std::to_string(this->GetSize().x / em));
-        wxGetApp().app_config->set("print_host_queue_dialog_width" , std::to_string(this->GetSize().y / em));
+        save_user_data(UDT_SIZE | UDT_POSITION | UDT_COLS);
      });
      
     int saved_height = std::max((int)HEIGHT, wxGetApp().app_config->has("print_host_queue_dialog_height") ? std::stoi(wxGetApp().app_config->get("print_host_queue_dialog_height")) : 0);
@@ -231,8 +229,7 @@ PrintHostQueueDialog::PrintHostQueueDialog(wxWindow *parent)
         SetPosition(wxPoint(std::stoi(wxGetApp().app_config->get("print_host_queue_dialog_x")), std::stoi(wxGetApp().app_config->get("print_host_queue_dialog_y"))));
 
     Bind(wxEVT_MOVE, [this, em](wxMoveEvent& evt) {
-        wxGetApp().app_config->set("print_host_queue_dialog_x", std::to_string(this->GetPosition().x));
-        wxGetApp().app_config->set("print_host_queue_dialog_y", std::to_string(this->GetPosition().y));
+        save_user_data(UDT_SIZE | UDT_POSITION | UDT_COLS);
     });
     
     job_list->Bind(wxEVT_DATAVIEW_SELECTION_CHANGED, [this](wxDataViewEvent&) { on_list_select(); });
@@ -287,6 +284,8 @@ void PrintHostQueueDialog::on_dpi_changed(const wxRect &suggested_rect)
 
     Fit();
     Refresh();
+
+    save_user_data(UDT_SIZE | UDT_POSITION | UDT_COLS);
 }
 
 PrintHostQueueDialog::JobState PrintHostQueueDialog::get_state(int idx)
@@ -308,6 +307,8 @@ void PrintHostQueueDialog::set_state(int idx, JobState state)
         case ST_CANCELLED:  job_list->SetValue(_L("Cancelled"), idx, COL_STATUS); break;
         case ST_COMPLETED:  job_list->SetValue(_L("Completed"), idx, COL_STATUS); break;
     }
+    // This might be ambigous call, but user data needs to be saved time to time
+    save_user_data(UDT_SIZE | UDT_POSITION | UDT_COLS);
 }
 
 void PrintHostQueueDialog::on_list_select()
@@ -375,5 +376,57 @@ void PrintHostQueueDialog::get_active_jobs(std::vector<std::pair<std::string, st
             ret.emplace_back(upload_names[i]);       
     }
     //job_list->data
+}
+void PrintHostQueueDialog::save_user_data(int udt)
+{
+    if (udt & UserDataType::UDT_SIZE) {
+        const auto em = GetTextExtent("m").x;
+        wxGetApp().app_config->set("print_host_queue_dialog_height", std::to_string(this->GetSize().x / em));
+        wxGetApp().app_config->set("print_host_queue_dialog_width", std::to_string(this->GetSize().y / em));
+    }
+    if (udt & UserDataType::UDT_POSITION)
+    {
+        wxGetApp().app_config->set("print_host_queue_dialog_x", std::to_string(this->GetPosition().x));
+        wxGetApp().app_config->set("print_host_queue_dialog_y", std::to_string(this->GetPosition().y));
+    }
+    if (udt & UserDataType::UDT_COLS)
+    {
+        for (size_t i = 0; i < job_list->GetColumnCount() - 1; i++)
+        {
+            wxGetApp().app_config->set("print_host_queue_dialog_column_" + std::to_string(i), std::to_string(job_list->GetColumn(i)->GetWidth()));
+        }
+    }    
+}
+bool PrintHostQueueDialog::load_user_data(int udt, std::vector<int>& vector)
+{
+    auto hasget = [](const std::string& name, std::vector<int>& vector)->bool {
+        if (wxGetApp().app_config->has(name)) {
+            vector.push_back(std::stoi(wxGetApp().app_config->get(name)));
+            return true;
+        }
+        return false;
+    };
+    if (udt & UserDataType::UDT_SIZE) {
+        if (!hasget("print_host_queue_dialog_height",vector))
+            return false;
+        if (!hasget("print_host_queue_dialog_width", vector))
+            return false;
+    }
+    if (udt & UserDataType::UDT_POSITION)
+    {
+        if (!hasget("print_host_queue_dialog_x", vector))
+            return false;
+        if (!hasget("print_host_queue_dialog_y", vector))
+            return false;
+    }
+    if (udt & UserDataType::UDT_COLS)
+    {
+        for (size_t i = 0; i < 6; i++)
+        {
+            if (!hasget("print_host_queue_dialog_column_" + std::to_string(i), vector))
+                return false;
+        }
+    return true;
+}
 }
 }}

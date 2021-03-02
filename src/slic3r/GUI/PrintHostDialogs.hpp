@@ -65,6 +65,13 @@ public:
 
     void append_job(const PrintHostJob &job);
     void get_active_jobs(std::vector<std::pair<std::string, std::string>>& ret);
+
+    virtual bool Show(bool show = true) override
+    {
+        if(!show)
+            save_user_data(UDT_SIZE | UDT_POSITION | UDT_COLS);
+        return DPIDialog::Show(show);
+    }
 protected:
     void on_dpi_changed(const wxRect &suggested_rect) override;
 
@@ -90,6 +97,12 @@ private:
 
     enum { HEIGHT = 60, WIDTH = 30, SPACING = 5 };
 
+    enum UserDataType{
+        UDT_SIZE = 1,
+        UDT_POSITION = 2,
+        UDT_COLS = 4
+    };
+
     wxButton *btn_cancel;
     wxButton *btn_error;
     wxDataViewListCtrl *job_list;
@@ -106,6 +119,8 @@ private:
     void on_cancel(Event&);
     // This vector keep adress and filename of uploads. It is used when checking for running uploads during exit.
     std::vector<std::pair<std::string, std::string>> upload_names;
+    void save_user_data(int);
+    bool load_user_data(int, std::vector<int>&);
 };
 
 wxDECLARE_EVENT(EVT_PRINTHOST_PROGRESS, PrintHostQueueDialog::Event);
