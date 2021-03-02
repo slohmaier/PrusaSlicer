@@ -426,7 +426,7 @@ bool PrintHostQueueDialog::load_user_data(int udt, std::vector<int>& vector)
             if (!hasget("print_host_queue_dialog_column_" + std::to_string(i), vector))
                 return false;
         }
+    }
     return true;
-}
 }
 }}
