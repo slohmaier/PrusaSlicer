@@ -782,12 +782,40 @@ void NotificationManager::ProgressBarNotification::render_text(ImGuiWrapper& img
 }
 void NotificationManager::ProgressBarNotification::render_bar(ImGuiWrapper& imgui, const float win_size_x, const float win_size_y, const float win_pos_x, const float win_pos_y)
 {
-	ImVec4 orange_color = ImVec4(.99f, .313f, .0f, 1.0f);
-	float  invisible_length = 0;
-
-	ImVec2 lineEnd = ImVec2(win_pos_x - invisible_length - m_window_width_offset, win_pos_y + win_size_y/2 + m_line_height / 2);
-	ImVec2 lineStart = ImVec2(win_pos_x - win_size_x + m_left_indentation, win_pos_y + win_size_y/2 + m_line_height / 2);
-	ImGui::GetWindowDrawList()->AddLine(lineStart, lineEnd, IM_COL32((int)(orange_color.x * 255), (int)(orange_color.y * 255), (int)(orange_color.z * 255), (1.0f * 255.f)), m_line_height * 0.7f);
+	switch (m_pb_state)
+	{
+	case Slic3r::GUI::NotificationManager::ProgressBarNotification::ProgressBarState::PB_PROGRESS:
+	{
+		ImVec4 orange_color		 = ImVec4(.99f, .313f, .0f, 1.0f);
+		float  invisible_length	 = 0;
+		ImVec2 lineEnd			 = ImVec2(win_pos_x - invisible_length - m_window_width_offset, win_pos_y + win_size_y / 2 + m_line_height / 2);
+		ImVec2 lineStart		 = ImVec2(win_pos_x - win_size_x + m_left_indentation, win_pos_y + win_size_y / 2 + m_line_height / 2);
+		ImGui::GetWindowDrawList()->AddLine(lineStart, lineEnd, IM_COL32((int)(orange_color.x * 255), (int)(orange_color.y * 255), (int)(orange_color.z * 255), (1.0f * 255.f)), m_line_height * 0.7f);
+		break;
+	}
+	case Slic3r::GUI::NotificationManager::ProgressBarNotification::ProgressBarState::PB_ERROR:
+	{
+		ImGui::SetCursorPosX(m_left_indentation);
+		ImGui::SetCursorPosY(win_pos_y + win_size_y / 2 + m_line_height / 2);
+		imgui.text("ERROR");
+		break;
+	}
+	case Slic3r::GUI::NotificationManager::ProgressBarNotification::ProgressBarState::PB_CANCELLED:
+	{
+		ImGui::SetCursorPosX(m_left_indentation);
+		ImGui::SetCursorPosY(win_pos_y + win_size_y / 2 + m_line_height / 2);
+		imgui.text("CANCELED");
+		break;
+	}
+	case Slic3r::GUI::NotificationManager::ProgressBarNotification::ProgressBarState::PB_COMPLETED:
+	{
+		ImGui::SetCursorPosX(m_left_indentation);
+		ImGui::SetCursorPosY(win_pos_y + win_size_y / 2 + m_line_height / 2);
+		imgui.text("COMPLETED");
+		break;
+	}
+	}
+	
 
 }
 //------NotificationManager--------

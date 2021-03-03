@@ -21,6 +21,7 @@
 #include "wxExtensions.hpp"
 #include "MainFrame.hpp"
 #include "libslic3r/AppConfig.hpp"
+#include "NotificationManager.hpp"
 
 namespace fs = boost::filesystem;
 
@@ -243,6 +244,9 @@ void PrintHostQueueDialog::append_job(const PrintHostJob &job)
     job_list->AppendItem(fields, static_cast<wxUIntPtr>(ST_NEW));
     // Both strings are UTF-8 encoded.
     upload_names.emplace_back(job.printhost->get_host(), job.upload_data.upload_path.string());
+
+    std::string notification_text = job.upload_data.upload_path.string() + "->" + job.printhost->get_host();
+    wxGetApp().notification_manager()->push_progress_bar_notification(notification_text);
 }
 
 void PrintHostQueueDialog::on_dpi_changed(const wxRect &suggested_rect)

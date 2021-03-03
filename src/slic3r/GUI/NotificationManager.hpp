@@ -335,8 +335,27 @@ private:
 	class ProgressBarNotification : public PopNotification
 	{
 	public:
+		enum class ProgressBarState
+		{
+			PB_PROGRESS,
+			PB_ERROR,
+			PB_CANCELLED, 
+			PB_COMPLETED
+		};
 		ProgressBarNotification(const NotificationData& n, NotificationIDProvider& id_provider, wxEvtHandler* evt_handler, float percentage) : PopNotification(n, id_provider, evt_handler) { set_percentage(percentage); }
-		void set_percentage(float percent) { m_percentage = percent; if (percent >= 1.0f) m_progress_complete = true; else m_progress_complete = false; }
+		void set_percentage(float percent) 
+		{
+			if (m_pb_state == ProgressBarState::PB_CANCELLED)
+				return;
+			m_percentage = percent; 
+			if (percent >= 1.0f) 
+				m_pb_state = ProgressBarState::PB_COMPLETED; 
+			else if (percent < 0.0f ) 
+				m_pb_state = ProgressBarState::PB_ERROR; 
+			else 
+				m_pb_state = ProgressBarState::PB_PROGRESS; 
+		}
+		void cancel() { m_pb_state = ProgressBarState::PB_CANCELLED; }
 	protected:
 		virtual void init();
 		virtual void render_text(ImGuiWrapper& imgui,
@@ -345,8 +364,12 @@ private:
 		void         render_bar(ImGuiWrapper& imgui,
 			const float win_size_x, const float win_size_y,
 			const float win_pos_x, const float win_pos_y);
-		bool m_progress_complete{ false };
-		float m_percentage;
+		float				m_percentage;
+		ProgressBarState	m_pb_state { ProgressBarState::PB_PROGRESS };
+	};
+
+	class PrintHostUploadNotification : public ProgressBarNotification
+	{
 	};
 
 	class ExportFinishedNotification : public PopNotification
