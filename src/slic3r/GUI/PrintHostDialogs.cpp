@@ -216,22 +216,22 @@ PrintHostQueueDialog::PrintHostQueueDialog(wxWindow *parent)
     topsizer->Add(btnsizer, 0, wxEXPAND);
     SetSizer(topsizer);
 
+    std::vector<int> size;
+    SetSize(load_user_data(UDT_SIZE, size) ? wxSize(size[0] * em, size[1] * em) : wxSize(HEIGHT * em, WIDTH * em));
+
     Bind(wxEVT_SIZE, [this, em](wxSizeEvent& evt) {
         OnSize(evt);
         save_user_data(UDT_SIZE | UDT_POSITION | UDT_COLS);
      });
-     
-    int saved_height = std::max((int)HEIGHT, wxGetApp().app_config->has("print_host_queue_dialog_height") ? std::stoi(wxGetApp().app_config->get("print_host_queue_dialog_height")) : 0);
-    int saved_width = std::max((int)WIDTH, wxGetApp().app_config->has("print_host_queue_dialog_width") ? std::stoi(wxGetApp().app_config->get("print_host_queue_dialog_width")) : 0);
-    SetSize(wxSize(saved_height * em, saved_width * em));
     
-    if (wxGetApp().app_config->has("print_host_queue_dialog_x") && wxGetApp().app_config->has("print_host_queue_dialog_y"))
-        SetPosition(wxPoint(std::stoi(wxGetApp().app_config->get("print_host_queue_dialog_x")), std::stoi(wxGetApp().app_config->get("print_host_queue_dialog_y"))));
+    std::vector<int> pos;
+    if (load_user_data(UDT_POSITION, pos))
+        SetPosition(wxPoint(pos[0], pos[1]));
 
     Bind(wxEVT_MOVE, [this, em](wxMoveEvent& evt) {
         save_user_data(UDT_SIZE | UDT_POSITION | UDT_COLS);
     });
-    
+
     job_list->Bind(wxEVT_DATAVIEW_SELECTION_CHANGED, [this](wxDataViewEvent&) { on_list_select(); });
 
     btn_cancel->Bind(wxEVT_BUTTON, [this](wxCommandEvent&) {
@@ -379,29 +379,33 @@ void PrintHostQueueDialog::get_active_jobs(std::vector<std::pair<std::string, st
 }
 void PrintHostQueueDialog::save_user_data(int udt)
 {
+    const auto em = GetTextExtent("m").x;
+    BOOST_LOG_TRIVIAL(error) << "save" << this->GetSize().x / em << " " << this->GetSize().y / em << " " << this->GetPosition().x << " " << this->GetPosition().y;
+    auto *app_config = wxGetApp().app_config;
     if (udt & UserDataType::UDT_SIZE) {
-        const auto em = GetTextExtent("m").x;
-        wxGetApp().app_config->set("print_host_queue_dialog_height", std::to_string(this->GetSize().x / em));
-        wxGetApp().app_config->set("print_host_queue_dialog_width", std::to_string(this->GetSize().y / em));
+        
+        app_config->set("print_host_queue_dialog_height", std::to_string(this->GetSize().x / em));
+        app_config->set("print_host_queue_dialog_width", std::to_string(this->GetSize().y / em));
     }
     if (udt & UserDataType::UDT_POSITION)
     {
-        wxGetApp().app_config->set("print_host_queue_dialog_x", std::to_string(this->GetPosition().x));
-        wxGetApp().app_config->set("print_host_queue_dialog_y", std::to_string(this->GetPosition().y));
+        app_config->set("print_host_queue_dialog_x", std::to_string(this->GetPosition().x));
+        app_config->set("print_host_queue_dialog_y", std::to_string(this->GetPosition().y));
     }
     if (udt & UserDataType::UDT_COLS)
     {
         for (size_t i = 0; i < job_list->GetColumnCount() - 1; i++)
         {
-            wxGetApp().app_config->set("print_host_queue_dialog_column_" + std::to_string(i), std::to_string(job_list->GetColumn(i)->GetWidth()));
+            app_config->set("print_host_queue_dialog_column_" + std::to_string(i), std::to_string(job_list->GetColumn(i)->GetWidth()));
         }
     }    
 }
 bool PrintHostQueueDialog::load_user_data(int udt, std::vector<int>& vector)
 {
-    auto hasget = [](const std::string& name, std::vector<int>& vector)->bool {
-        if (wxGetApp().app_config->has(name)) {
-            vector.push_back(std::stoi(wxGetApp().app_config->get(name)));
+    auto* app_config = wxGetApp().app_config;
+    auto hasget = [app_config](const std::string& name, std::vector<int>& vector)->bool {
+        if (app_config->has(name)) {
+            vector.push_back(std::stoi(app_config->get(name)));
             return true;
         }
         return false;
