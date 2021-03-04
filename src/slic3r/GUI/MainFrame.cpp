@@ -522,6 +522,7 @@ void MainFrame::init_tabpanel()
 #ifndef __WXOSX__ // Don't call SetFont under OSX to avoid name cutting in ObjectList
     m_tabpanel->SetFont(Slic3r::GUI::wxGetApp().normal_font());
 #endif
+    m_tabpanel->SetBackgroundColour(wxT("BLACK"));
     m_tabpanel->Hide();
     m_settings_dialog.set_tabpanel(m_tabpanel);
 
