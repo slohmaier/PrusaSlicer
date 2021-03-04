@@ -67,13 +67,28 @@
 
 #include <imgui/imgui_internal.h>
 
+#define BG_DARKMODE_FACTOR 0.1f
+
 static constexpr const float TRACKBALLSIZE = 0.8f;
 
 static constexpr const float DEFAULT_BG_DARK_COLOR[3] = { 0.478f, 0.478f, 0.478f };
 static constexpr const float DEFAULT_BG_LIGHT_COLOR[3] = { 0.753f, 0.753f, 0.753f };
 static constexpr const float ERROR_BG_DARK_COLOR[3] = { 0.478f, 0.192f, 0.039f };
-static constexpr const float ERROR_BG_LIGHT_COLOR[3] = { 0.753f, 0.192f, 0.039f };
+static constexpr const float ERROR_BG_LIGHT_COLOR[3] = { 0.753f, 0.192f, 0.039 };
 //static constexpr const float AXES_COLOR[3][3] = { { 1.0f, 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f }, { 0.0f, 0.0f, 1.0f } };
+
+static constexpr const float DEFAULT_BG_DARK_COLOR_DARKMODE[3] = { 0.478f * BG_DARKMODE_FACTOR,
+                                                                   0.478f * BG_DARKMODE_FACTOR,
+                                                                   0.478f * BG_DARKMODE_FACTOR };
+static constexpr const float DEFAULT_BG_LIGHT_COLOR_DARKMODE[3] = { 0.753f * BG_DARKMODE_FACTOR,
+                                                                    0.753f * BG_DARKMODE_FACTOR,
+                                                                    0.753f * BG_DARKMODE_FACTOR };
+static constexpr const float ERROR_BG_DARK_COLOR_DARKMODE[3] = { 0.478f * BG_DARKMODE_FACTOR,
+                                                                 0.192f * BG_DARKMODE_FACTOR,
+                                                                 0.039f * BG_DARKMODE_FACTOR };
+static constexpr const float ERROR_BG_LIGHT_COLOR_DARKMODE[3] = { 0.753f * BG_DARKMODE_FACTOR,
+                                                                  0.192f * BG_DARKMODE_FACTOR,
+                                                                  0.039 * BG_DARKMODE_FACTOR };
 
 // Number of floats
 static constexpr const size_t MAX_VERTEX_BUFFER_SIZE     = 131072 * 6; // 3.15MB
@@ -5004,17 +5019,21 @@ void GLCanvas3D::_render_background() const
 
     ::glBegin(GL_QUADS);
     if (use_error_color)
-        ::glColor3fv(ERROR_BG_DARK_COLOR);
+        ::glColor3fv(wxSystemSettings::GetAppearance().IsDark() ?
+            ERROR_BG_DARK_COLOR_DARKMODE : ERROR_BG_DARK_COLOR);
     else
-        ::glColor3fv(DEFAULT_BG_DARK_COLOR);
+        ::glColor3fv(wxSystemSettings::GetAppearance().IsDark() ? 
+            DEFAULT_BG_DARK_COLOR_DARKMODE : DEFAULT_BG_DARK_COLOR);
 
     ::glVertex2f(-1.0f, -1.0f);
     ::glVertex2f(1.0f, -1.0f);
 
     if (use_error_color)
-        ::glColor3fv(ERROR_BG_LIGHT_COLOR);
+        ::glColor3fv(wxSystemSettings::GetAppearance().IsDark() ?
+            ERROR_BG_LIGHT_COLOR_DARKMODE : ERROR_BG_LIGHT_COLOR);
     else
-        ::glColor3fv(DEFAULT_BG_LIGHT_COLOR);
+        ::glColor3fv(wxSystemSettings::GetAppearance().IsDark() ?
+            DEFAULT_BG_LIGHT_COLOR_DARKMODE : DEFAULT_BG_LIGHT_COLOR);
 
     ::glVertex2f(1.0f, 1.0f);
     ::glVertex2f(-1.0f, 1.0f);
