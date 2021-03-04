@@ -52,6 +52,10 @@ void PreferencesDialog::build()
 
 	wxNotebook* tabs = new wxNotebook(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxNB_TOP | wxTAB_TRAVERSAL | wxNB_NOPAGETHEME);
 
+	if (wxSystemSettings::GetAppearance().IsDark()) {
+        tabs->SetBackgroundColour(wxT("BLACK"));
+    }
+
 	// Add "General" tab
 	m_optgroup_general = create_options_tab(_L("General"), tabs);
 	m_optgroup_general->m_on_change = [this](t_config_option_key opt_key, boost::any value) {
